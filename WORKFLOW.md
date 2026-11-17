@@ -7,7 +7,7 @@ LLM 節點（擷取、撰寫、生成）由 Claude Code 執行；檢查節點 C2
 ```mermaid
 flowchart TD
   subgraph W["Wiki 迴圈（每篇資料一次）"]
-    A[取得資料<br/>WebFetch arXiv abs/html/pdf] --> B[擷取原文<br/>raw/&lt;id&gt;.md]
+    A[取得資料<br/>WebFetch arXiv abs/html/pdf] --> B[擷取原文<br/>raw/#lt;id#gt;.md]
     B --> C1{C1 來源核實}
     C1 -- 失敗 --> A
     C1 -- 通過 --> D[撰寫/更新 Wiki 頁<br/>sources + concepts]

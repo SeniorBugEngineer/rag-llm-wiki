@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RAG Wiki 作業說明</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column, numbered sections mirror the six required submission items */
+:root {
+  --bg: #e9efed; --card: #fbfdfc; --ink: #15211f; --muted: #55625f; --rule: #c9d5d1;
+  --accent: #0f6f66; --accent-soft: #d6ebe7; --mark-soft: #fbe9b7; --bad: #b5523b; --bad-soft: #f6e1da; --good-soft: #dcefe3;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1615; --card: #16211f; --ink: #e4ecea; --muted: #9aaba7; --rule: #2c3b38;
+    --accent: #5cc2b5; --accent-soft: #1d3633; --mark-soft: #4a3d17; --bad: #e08a72; --bad-soft: #3d231c; --good-soft: #1c3527;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1615; --card: #16211f; --ink: #e4ecea; --muted: #9aaba7; --rule: #2c3b38;
+  --accent: #5cc2b5; --accent-soft: #1d3633; --mark-soft: #4a3d17; --bad: #e08a72; --bad-soft: #3d231c; --good-soft: #1c3527;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.75 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 920px; margin: 0 auto; padding-block: 40px 64px; display: grid; gap: 28px; }
+header { display: grid; gap: 10px; }
+.eyebrow { font: 500 13px/1 var(--font-mono); color: var(--accent); letter-spacing: .08em; }
+h1 { margin: 0; font-size: clamp(30px, 5vw, 44px); font-weight: 900; line-height: 1.25; text-wrap: balance; }
+h2 { margin: 0; font-size: 24px; font-weight: 900; display: flex; gap: 12px; align-items: baseline; text-wrap: balance; }
+h2 .n { font: 500 14px var(--font-mono); color: var(--accent); }
+h3 { margin: 0; font-size: 18px; }
+p { margin: 0; max-width: 68ch; }
+section { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 26px 28px; display: grid; gap: 14px; min-width: 0; }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.links { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.links a { display: grid; gap: 2px; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 8px; text-decoration: none; color: var(--ink); }
+.links a:hover { border-color: var(--accent); }
+.links small { font: 12px var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-size: 12.5px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+td.t { font: 12.5px var(--font-mono); color: var(--muted); white-space: nowrap; }
+.pill { font: 500 12px var(--font-mono); padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.pass { background: var(--good-soft); color: var(--accent); }
+.fail { background: var(--bad-soft); color: var(--bad); }
+.mix { background: var(--mark-soft); color: var(--ink); }
+code { font: 13.5px var(--font-mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+pre.mermaid { background: var(--bg); border-radius: 8px; padding: 16px; margin: 0; overflow-x: auto; text-align: center; }
+.two { display: grid; gap: 22px; }
+.two > * { min-width: 0; display: grid; gap: 8px; align-content: start; }
+.callout { border-left: 4px solid var(--accent); padding: 4px 0 4px 14px; }
+.stat { display: grid; grid-template-columns: 12em 1fr; gap: 10px; align-items: center; }
+.stat .track { height: 22px; background: var(--bg); border-radius: 3px; }
+.stat .fill { height: 100%; background: var(--bad); border-radius: 3px; color: var(--card); font: 500 12px/22px var(--font-mono); padding-left: 8px; min-width: 2em; }
+.stat .fill.ok { background: var(--rule); color: var(--ink); }
+.stat span:first-child { font-size: 14px; color: var(--muted); text-align: right; }
+.note { font-size: 14px; color: var(--muted); }
+@media (max-width: 560px) { section { padding: 20px 16px; } .stat { grid-template-columns: 7.5em 1fr; } }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="eyebrow">作業｜用 LLM Wiki 做一份教學 HTML 簡報</div>
+  <h1>RAG LLM Wiki：從 8 篇資料到一份教學簡報</h1>
+  <p>這一頁依照繳交要求，依序說明 Wiki、簡報、loop／graph 設計、實際執行紀錄與反思。本頁的執行紀錄表由腳本直接從 <code>log.md</code> 產生，沒有人工改寫。</p>
+</header>
+
+<section id="s1">
+  <h2><span class="n">1</span>LLM Wiki 主題與簡介</h2>
+  <p>主題是 <b>RAG（Retrieval-Augmented Generation，檢索增強生成）</b>：讓 LLM 回答前先從外部資料中找出相關段落，再依據這些段落生成答案。</p>
+  <p>Wiki 以「先討論、後生成」的方式建立：主題、交付形式、書單、graph 實作方式都先逐項討論確認，寫成設計規格後才開始 ingest。內容共 <b>8 篇資料、21 頁</b>（8 頁資料摘要 + 13 頁概念），每個概念頁的每項說法都標註來源頁。</p>
+  <div class="scroll"><table>
+    <thead><tr><th>資料</th><th>在 Wiki／簡報中的角色</th></tr></thead>
+    <tbody>
+      <tr><td>Lewis et al. 2020（NeurIPS）</td><td>RAG 起源與定義</td></tr>
+      <tr><td>Karpukhin et al. 2020（EMNLP，DPR）</td><td>Dense 檢索、embedding</td></tr>
+      <tr><td>Gao et al. 2023（RAG Survey）</td><td>Naive／Advanced／Modular 範式地圖</td></tr>
+      <tr><td>Liu et al. 2023（TACL，Lost in the Middle）</td><td>長上下文陷阱</td></tr>
+      <tr><td>Anthropic 2024（Contextual Retrieval）</td><td>chunk 補背景、hybrid、rerank</td></tr>
+      <tr><td>Asai et al. 2023（Self-RAG）</td><td>自適應檢索與自我檢查</td></tr>
+      <tr><td>Edge et al. 2024（GraphRAG）</td><td>全域問題、知識圖譜</td></tr>
+      <tr><td>Es et al. 2023（RAGAS）</td><td>評估指標</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s2">
+  <h2><span class="n">2–3</span>Wiki 與簡報連結</h2>
+  <div class="links">
+    <a href="https://github.com/SeniorBugEngineer/rag-llm-wiki/blob/main/wiki/index.md"><b>📚 LLM Wiki 目錄</b><small>github.com/…/wiki/index.md</small></a>
+    <a href="./index.html"><b>🖥️ 教學 HTML 簡報（18 張）</b><small>seniorbugengineer.github.io/rag-llm-wiki/</small></a>
+    <a href="https://github.com/SeniorBugEngineer/rag-llm-wiki"><b>📦 原始碼 repo</b><small>raw/、wiki/、scripts/、runs/、log.md</small></a>
+  </div>
+  <p class="note">Wiki 與簡報的對應：每張內容投影片都有 <code>data-src</code> 屬性，指向支撐它的 Wiki 頁，右下角可以點回去。C4 檢查確認 16 張內容頁全都有出處，13 個概念頁也全都被至少一張投影片引用。</p>
+</section>
+
+<section id="s4">
+  <h2><span class="n">4</span>loop／graph 設計</h2>
+  <p class="callout">原則：<b>LLM 負責寫，腳本負責查。</b>生成內容不穩定，所以每個生成節點後面都接一個可重跑的檢查，失敗就回到前一個節點，只重做壞掉的部分。</p>
+  <div class="two">
+    <div><h3>v1（初版）</h3><pre class="mermaid">{{MERMAID_V1}}</pre></div>
+    <div><h3>v2（依執行紀錄修改）</h3><pre class="mermaid">{{MERMAID_V2}}</pre></div>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th>問題</th><th>回答</th></tr></thead>
+    <tbody>
+      <tr><td><b>哪些步驟會重複執行？</b></td><td>Wiki 迴圈每篇資料跑一次（8 次）；C1 失敗就重抓（換 URL 或格式）；C2／C3／C4 失敗就「修正 → 重跑」，直到通過，而且每一輪都寫入 log。</td></tr>
+      <tr><td><b>哪些地方需要檢查或重新生成？</b></td><td>C1 來源核實（標題、作者、年份）→ C2 Wiki 結構（欄位、連結、孤立頁）→ C3 大綱每個論點都有出處 → C4 每張投影片都有出處 → C5 瀏覽器實測與新手通讀。v2 再加上 C0 可抓取預檢，以及 C2+／C3+／C4+ 數字對應。重新生成時只重做失敗的頁面或投影片。</td></tr>
+      <tr><td><b>為什麼這樣設計？</b></td><td>(1) 出處貫穿全程：source id → Wiki frontmatter → 大綱 <code>src:</code> → 投影片 <code>data-src</code>，任何一段斷掉，腳本都能抓到，保證簡報對應 Wiki。(2) 局部重生，避免整份重寫又引入新錯誤。(3) 檢查是程式，結果可以重跑、可以驗證，log 才可信。</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">完整規格見 <a href="https://github.com/SeniorBugEngineer/rag-llm-wiki/blob/main/WORKFLOW.md">WORKFLOW.md</a>。檢查腳本：<code>check_wiki.py</code>（C2）、<code>check_slides.py</code>（C3／C4）、<code>check_claims.py</code>（v2 的 C2+／C3+／C4+），共 22 個單元測試。</p>
+</section>
+
+<section id="s5">
+  <h2><span class="n">5</span>實際執行與檢查紀錄</h2>
+  <p>以下 {{LOG_COUNT}} 筆紀錄由 <code>scripts/build_process.py</code> 直接從 <a href="https://github.com/SeniorBugEngineer/rag-llm-wiki/blob/main/log.md">log.md</a> 轉成表格；每次腳本檢查的原始輸出都存在 <a href="https://github.com/SeniorBugEngineer/rag-llm-wiki/tree/main/runs">runs/</a>。</p>
+  <div class="scroll"><table>
+    <thead><tr><th>時間</th><th>節點</th><th>結果</th><th>原因</th><th>處置</th></tr></thead>
+    <tbody>
+{{LOG_ROWS}}
+    </tbody>
+  </table></div>
+</section>
+
+<section id="s6">
+  <h2><span class="n">6</span>反思</h2>
+  <h3>哪一個節點最常出錯？</h3>
+  <div class="stat"><span>C1 取得資料</span><div class="track"><div class="fill" style="width:100%">3</div></div></div>
+  <div class="stat"><span>語意錯誤（結構檢查放行）</span><div class="track"><div class="fill" style="width:66.7%">2</div></div></div>
+  <div class="stat"><span>C5 版面</span><div class="track"><div class="fill" style="width:33.3%">1</div></div></div>
+  <div class="stat"><span>C2（預期內）</span><div class="track"><div class="fill ok" style="width:33.3%">1</div></div></div>
+  <p><b>最常出錯的是 C1「取得資料」</b>（3 次）。三次失敗都跟內容無關，都是「格式抓不到」：抓網頁的工具不肯回傳 abstract 原文、http 呼叫被轉址後拿到 0 bytes、PDF 只得到二進位。另外，計畫寫的後備順序是 abs → html → pdf，我實際執行時卻先試了 PDF，多繞了一輪。</p>
+  <p><b>最危險的是語意錯誤</b>（2 次）。C2、C3 都顯示 PASS，但概念頁的引用歸屬寫錯了，大綱裡也有一個論點引用了不含該內容的頁面。v1 的檢查只驗證「出處檔案存在」，驗不到「出處是否真的支持這句話」。這兩個錯誤都是我在正式檢查之外，臨時多加檢查才抓到的。</p>
+  <h3>發現問題後，把檢查往前移到哪一步？</h3>
+  <ul>
+    <li><b>C1 → 討論書單時</b>：新增 C0「可抓取預檢」，選書時就確認每篇都能用 arXiv API 或 HTML 取得文字，並把抓取順序固定為 API → HTML、不抓 PDF。</li>
+    <li><b>語意檢查 → 撰寫 Wiki 當下</b>：把臨時腳本正式化為 <code>check_claims.py</code>（先寫測試）。Wiki 頁的每個數字都必須出現在它引用的 raw 原文中；大綱和投影片的數字也必須出現在它們引用的 Wiki 頁中。錯誤越早抓，要回頭重做的步驟越少。</li>
+  </ul>
+  <h3>有沒有因此修改 workflow／graph？為什麼？</h3>
+  <p>有，從 v1 改成 v2（見上方第 4 節的圖）。v2 第一次執行時，C2+ 抓出 3 處單位換算（例如原文 21M 寫成「2,100 萬」），C4+ 抓出第 8 張的示意向量。這些都是刻意的改寫，所以改用 <code>&lt;!-- num-ok --&gt;</code> 明確標註後放行，讓「刻意改寫」和「打錯字」可以被區分，也留下可審查的痕跡。</p>
+  <p>還有一件意外的收穫：C5 第一次看起來「手機版溢出」，量測後才發現是 headless 瀏覽器的最小視窗寬度約 496px 所造成的假象。所以 v2 的 C5 改用 400px iframe 實測。<b>檢查工具本身也會出錯</b>，判定失敗前要先確認是頁面的問題，還是工具的問題。</p>
+  <p class="note">v2 的限制：check_claims 只保證「數字有出處」，像「A 優於 B」這類文字主張，仍需要人工通讀。</p>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+(function () {
+  var dark = document.documentElement.getAttribute("data-theme") === "dark" ||
+    (!document.documentElement.getAttribute("data-theme") && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
+  if (window.mermaid) { mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "neutral", flowchart: { htmlLabels: true } }); }
+})();
+</script>
+</body>
+</html>
