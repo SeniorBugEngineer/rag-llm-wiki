@@ -1,0 +1,2 @@
+ERROR slide 8: numbers not in cited pages: ['0.10', '0.12', '0.37', '0.40']
+C4+ FAIL (1 errors)

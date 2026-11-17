@@ -18,7 +18,7 @@ RAG 這個名詞的起點：把「模型參數裡的知識」（parametric memor
 大型預訓練模型雖然把知識存在參數裡，但難以精確取用、無法說明答案出處，也很難更新知識。這些都是 [[hallucination]] 與知識過時的根源。
 
 ## 怎麼做
-- **Retriever**：DPR bi-encoder（見 [[karpukhin-2020]]），在約 2,100 萬個 100 字 Wikipedia chunk 中找出最相關的 k 份。
+- **Retriever**：DPR bi-encoder（見 [[karpukhin-2020]]），在約 2,100 萬個 100 字 Wikipedia chunk 中<!-- num-ok: 2,100 = 原文 21M -->找出最相關的 k 份。
 - **Generator**：BART-large，把問題與檢索到的文件一起當輸入來生成答案。
 - **兩種組合方式**：RAG-Sequence 整段答案用同一份文件；RAG-Token 每個字都可以參考不同文件。
 - 詳見 [[rag]]、[[retrieval]]、[[embedding]]。

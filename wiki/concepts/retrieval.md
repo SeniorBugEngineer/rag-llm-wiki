@@ -23,7 +23,7 @@ updated: 2026-11-17
 
 ## 出處說法
 - [[karpukhin-2020]]：Dense 檢索 top-20 正確率在 Natural Questions 上從 BM25 的 59.1 提升到 78.4；但在字面重疊高的 SQuAD 上 BM25 仍較好。
-- [[lewis-2020]]：RAG 用 DPR 從約 2,100 萬個 Wikipedia 段落中檢索 k 份文件。
+- [[lewis-2020]]：RAG 用 DPR 從約 2,100 萬個 Wikipedia 段落中<!-- num-ok: 2,100 = 原文 21M -->檢索 k 份文件。
 - [[liu-2023]]：檢索數量不是越多越好，從 20 份加到 50 份，GPT-3.5-Turbo 只進步約 1.5%。
 
 ## 相關概念
