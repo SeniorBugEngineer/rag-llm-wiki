@@ -47,6 +47,7 @@ def check_wiki(root: Path):
     return errors
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=".")
     root = Path(ap.parse_args().root)
