@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RAG 是什麼？</title>
+<meta name="description" content="給新手的 RAG（檢索增強生成）入門簡報，內容全部取自 RAG LLM Wiki。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one index card per slide, catalog tab on top, highlighter amber marks "retrieved" text */
+:root {
+  --bg: #e9efed;
+  --card: #fbfdfc;
+  --ink: #15211f;
+  --muted: #55625f;
+  --rule: #c9d5d1;
+  --accent: #0f6f66;
+  --accent-soft: #d6ebe7;
+  --mark: #f4c34a;
+  --mark-soft: #fbe9b7;
+  --bad: #b5523b;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1615; --card: #16211f; --ink: #e4ecea; --muted: #9aaba7; --rule: #2c3b38;
+    --accent: #5cc2b5; --accent-soft: #1d3633; --mark: #e9b949; --mark-soft: #4a3d17; --bad: #e08a72;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1615; --card: #16211f; --ink: #e4ecea; --muted: #9aaba7; --rule: #2c3b38;
+  --accent: #5cc2b5; --accent-soft: #1d3633; --mark: #e9b949; --mark-soft: #4a3d17; --bad: #e08a72;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 18px; line-height: 1.7;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column;
+}
+.deck { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; padding-block: 20px 8px; min-height: 0; }
+.slide {
+  display: none; width: 100%; min-width: 0; max-width: 980px; min-height: min(560px, 100%);
+  background: var(--card); border: 1px solid var(--rule); border-radius: 4px 4px 10px 10px;
+  position: relative; padding: 52px 48px 20px; box-shadow: 0 1px 0 var(--rule), 0 12px 30px -18px rgba(0,0,0,.35);
+  overflow-y: auto; max-height: 100%;
+}
+.slide.active { display: flex; flex-direction: column; gap: 18px; }
+.slide::before { /* catalog-card tab, hanging from the top edge */
+  content: attr(data-section); position: absolute; top: 0; left: 40px;
+  font: 500 12px/1 var(--font-mono); letter-spacing: .08em; color: var(--accent);
+  background: var(--accent-soft); border-radius: 0 0 6px 6px; padding: 7px 12px 6px;
+}
+.slide[data-section=""]::before { display: none; }
+.callno { font: 500 13px/1 var(--font-mono); color: var(--muted); letter-spacing: .06em; }
+h1, h2 { margin: 0; font-weight: 900; line-height: 1.25; text-wrap: balance; }
+h1 { font-size: clamp(34px, 6vw, 58px); }
+h2 { font-size: clamp(24px, 3.6vw, 36px); }
+h3 { margin: 0; font-size: 19px; font-weight: 700; }
+p { margin: 0; max-width: 62ch; }
+ul { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+mark { background: linear-gradient(transparent 55%, var(--mark-soft) 55%); color: inherit; padding: 0 2px; }
+.lead { font-size: 20px; color: var(--muted); }
+.big { font-size: clamp(26px, 4vw, 40px); font-weight: 900; line-height: 1.3; }
+.mono { font-family: var(--font-mono); }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.grid > * { min-width: 0; }
+.box { border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; display: grid; gap: 6px; align-content: start; }
+.box.hl { border-color: var(--accent); background: var(--accent-soft); }
+.box .k { font: 500 12px/1.2 var(--font-mono); color: var(--accent); letter-spacing: .08em; text-transform: uppercase; }
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; }
+.flow .box { flex: 1 1 180px; }
+.arrow { align-self: center; color: var(--accent); font-size: 26px; font-weight: 700; }
+.chart { display: grid; gap: 10px; }
+.bar-row { display: grid; grid-template-columns: 9.5em 1fr; gap: 12px; align-items: center; }
+.bar-row > span:first-child { font-size: 15px; color: var(--muted); text-align: right; }
+.track { position: relative; height: 30px; background: var(--bg); border-radius: 3px; }
+.fill { height: 100%; background: var(--accent); border-radius: 3px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; min-width: 3.2em; }
+.fill.alt { background: var(--mark); }
+.fill.dim { background: var(--rule); }
+.fill b { font: 500 14px/1 var(--font-mono); color: var(--card); font-variant-numeric: tabular-nums; }
+.fill.alt b, .fill.dim b { color: var(--ink); }
+.refline { position: absolute; top: -6px; bottom: -6px; border-left: 2px dashed var(--bad); }
+.axis { font: 12px/1 var(--font-mono); color: var(--muted); display: flex; justify-content: space-between; margin-left: calc(9.5em + 12px); }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+table { border-collapse: collapse; width: 100%; font-size: 16px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-size: 13px; color: var(--muted); font-weight: 500; letter-spacing: .04em; }
+td code, .chip { font: 500 14px var(--font-mono); background: var(--accent-soft); color: var(--accent); padding: 1px 6px; border-radius: 4px; }
+.scroll { overflow-x: auto; overflow-y: hidden; }
+.quote { border-left: 4px solid var(--mark); padding: 6px 0 6px 16px; font-size: 22px; font-weight: 700; }
+.note { font-size: 15px; color: var(--muted); }
+details { border: 1px solid var(--rule); border-radius: 8px; padding: 10px 16px; }
+details[open] { border-color: var(--accent); }
+summary { cursor: pointer; font-weight: 700; }
+details p { margin-top: 8px; }
+.src {
+  margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--rule); text-align: right;
+  font: 12px/1.6 var(--font-mono); color: var(--muted); overflow-wrap: anywhere;
+}
+.src a { color: var(--accent); }
+.cover { justify-content: center; }
+.cover .catalog { display: flex; flex-wrap: wrap; gap: 8px; }
+nav.bar {
+  display: flex; align-items: center; gap: 12px; padding-block: 8px max(10px, env(safe-area-inset-bottom, 0px));
+  max-width: 980px; width: 100%; margin: 0 auto;
+}
+nav button {
+  font: 500 15px var(--font-body); color: var(--ink); background: var(--card); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 6px 14px; cursor: pointer;
+}
+nav button:hover { border-color: var(--accent); }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.progress { flex: 1; height: 4px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.progress div { height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.count { font: 500 13px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 4.5em; text-align: right; }
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .slide { padding: 44px 18px 16px; }
+  .slide::before { left: 16px; }
+  .bar-row { grid-template-columns: 6.5em 1fr; }
+  .axis { margin-left: calc(6.5em + 12px); }
+  .arrow { transform: rotate(90deg); width: 100%; text-align: center; }
+  .quote { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .progress div { transition: none; } }
+</style>
+</head>
+<body>
+<main class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide cover" data-kind="cover" data-section="">
+  <div class="callno">RAG · 001.4 · 入門</div>
+  <h1>RAG 是什麼？<br>讓 AI <mark>先查資料</mark>，再回答</h1>
+  <p class="lead">給第一次接觸的人：用 18 張卡片，看懂檢索增強生成（Retrieval-Augmented Generation）。</p>
+  <div class="catalog"><span class="chip">8 篇資料</span><span class="chip">21 頁 Wiki</span><span class="chip">每頁標註出處</span></div>
+  <p class="note">按 → 或空白鍵翻頁，← 返回。每張卡片右下角的連結，可以回到支撐該頁內容的 Wiki 頁面。</p>
+</section>
+
+<!-- 2 -->
+<section class="slide" data-section="一 · 為什麼需要 RAG" data-src="wiki/concepts/hallucination.md, wiki/sources/gao-2023.md">
+  <div class="callno">02</div>
+  <h2>LLM 很厲害，但有三個老毛病</h2>
+  <div class="grid">
+    <div class="box"><span class="k">hallucination</span><h3>幻覺</h3><p>用很有自信的語氣，說出錯誤或沒有根據的內容。</p></div>
+    <div class="box"><span class="k">outdated</span><h3>知識過時</h3><p>知識停在訓練資料的那一天，之後發生的事都不知道。</p></div>
+    <div class="box"><span class="k">untraceable</span><h3>無法追溯</h3><p>說不出答案是從哪裡來的，使用者無從查證。</p></div>
+  </div>
+  <p class="note">RAG 綜述把這三項列為 LLM 的主要挑戰。</p>
+</section>
+
+<!-- 3 -->
+<section class="slide" data-section="一 · 為什麼需要 RAG" data-src="wiki/sources/lewis-2020.md, wiki/concepts/rag.md">
+  <div class="callno">03</div>
+  <h2>原因：知識都「背」在參數裡</h2>
+  <p>語言模型把讀過的知識壓縮存在參數中，論文稱為 <b>parametric memory</b>。這種記憶的問題是：</p>
+  <ul>
+    <li>難以<mark>精確取出</mark>特定事實</li>
+    <li>無法指出答案的<mark>出處</mark></li>
+    <li>要<mark>更新</mark>知識，就得重新訓練</li>
+  </ul>
+  <div class="quote">就像閉書考：只能靠記憶，記錯了也不知道。</div>
+</section>
+
+<!-- 4 -->
+<section class="slide" data-section="二 · RAG 是什麼" data-src="wiki/concepts/rag.md, wiki/sources/lewis-2020.md">
+  <div class="callno">04</div>
+  <h2>一句話：先查資料，再回答</h2>
+  <p class="big">RAG 把閉書考，變成<mark>開書考</mark>。</p>
+  <div class="grid">
+    <div class="box"><span class="k">parametric memory</span><h3>模型參數裡的知識</h3><p>原本就有的「記憶」，負責理解問題、組織語言。</p></div>
+    <div class="box hl"><span class="k">non-parametric memory</span><h3>可檢索的外部資料</h3><p>一個可以隨時查詢、隨時替換的文件索引。</p></div>
+  </div>
+  <p class="note">2020 年 Lewis 等人提出 RAG，把兩種記憶接在一起：外部資料用的是約 2,100 萬段 Wikipedia。</p>
+</section>
+
+<!-- 5 -->
+<section class="slide" data-section="二 · RAG 是什麼" data-src="wiki/concepts/rag.md, wiki/concepts/retrieval.md">
+  <div class="callno">05</div>
+  <h2>RAG 的三個步驟</h2>
+  <div class="flow">
+    <div class="box"><span class="k">1 · indexing（事先做好）</span><h3>建索引</h3><p>文件切成小段 → 每段轉成向量 → 存進向量資料庫。</p></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="box hl"><span class="k">2 · retrieval</span><h3>檢索</h3><p>問題也轉成向量，找出最相似的 top-K 段（也就是最像的前 K 段）。</p></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="box"><span class="k">3 · generation</span><h3>生成</h3><p>「問題＋找到的段落」一起交給 LLM 回答。</p></div>
+  </div>
+  <div class="box">
+    <span class="k">例子（示意）</span>
+    <p>問：「2018 年的英國首相是誰？」→ 檢索到一段寫著 2018 年英國首相的 Wikipedia 段落 → LLM 讀了這段再回答，而且可以附上出處。</p>
+  </div>
+  <p class="note">綜述稱這個基本流程為 Naive RAG 的「Retrieve-Read」。</p>
+</section>
+
+<!-- 6 -->
+<section class="slide" data-section="二 · RAG 是什麼" data-src="wiki/sources/lewis-2020.md, wiki/concepts/hallucination.md">
+  <div class="callno">06</div>
+  <h2>效果：用數字說話</h2>
+  <div class="chart" role="img" aria-label="Natural Questions Exact Match：閉卷 T5-11B 34.5，RAG-Sequence 44.5">
+    <h3>Natural Questions 答對率（Exact Match）</h3>
+    <div class="bar-row"><span>閉卷 T5-11B</span><div class="track"><div class="fill dim" style="width:34.5%"><b>34.5</b></div></div></div>
+    <div class="bar-row"><span>RAG</span><div class="track"><div class="fill" style="width:44.5%"><b>44.5</b></div></div></div>
+    <div class="axis"><span>0</span><span>50</span><span>100</span></div>
+  </div>
+  <div class="grid">
+    <div class="box hl"><span class="k">知識可以換</span><p>用 2016 和 2018 兩份 Wikipedia 問 82 位換過人的世界領袖：索引年份相符時答對約 <b>70% / 68%</b>，不相符只剩 <b>12% / 4%</b>。換資料庫就能更新知識。</p></div>
+    <div class="box"><span class="k">更符合事實</span><p>人工評估出題：RAG 被評為較符合事實 <b>42.7%</b>，純參數模型 BART 只有 <b>7.1%</b>。</p></div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="slide" data-section="三 · 檢索怎麼做" data-src="wiki/concepts/chunking.md">
+  <div class="callno">07</div>
+  <h2>Chunking：先把文件切成小段</h2>
+  <p>檢索找的是「段」，不是整份文件。常見做法是切成固定長度，例如 <span class="chip">100</span> <span class="chip">256</span> <span class="chip">512</span> tokens。</p>
+  <div class="grid">
+    <div class="box"><span class="k">大 chunk</span><p>上下文較完整，但雜訊多、成本高。</p></div>
+    <div class="box"><span class="k">小 chunk</span><p>內容精準，但可能缺少理解所需的上下文。</p></div>
+    <div class="box"><span class="k">折衷做法</span><p>Sliding window 重疊切；Small2Big 用句子檢索，再附上前後文。</p></div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide" data-section="三 · 檢索怎麼做" data-src="wiki/concepts/embedding.md, wiki/sources/karpukhin-2020.md">
+  <div class="callno">08</div>
+  <h2>Embedding：意思相近，向量就相近</h2>
+  <div class="flow">
+    <div class="box"><span class="k">問題</span><p>「RAG 是誰提出的？」</p><p class="mono note">→ [0.12, −0.40, …]（768 維）</p></div>
+    <div class="arrow" aria-hidden="true">·</div>
+    <div class="box"><span class="k">段落</span><p>「Lewis 等人在 2020 年提出…」</p><p class="mono note">→ [0.10, −0.37, …]（768 維）</p></div>
+    <div class="arrow" aria-hidden="true">=</div>
+    <div class="box hl"><span class="k">內積</span><p>數值越大，代表越相關。</p></div>
+  </div>
+  <ul>
+    <li>DPR 用兩個 BERT：一個把問題轉成向量，一個把段落轉成向量。</li>
+    <li>所有段落的向量<mark>事先算好</mark>，存進 FAISS 索引；查詢時只要算問題的向量。</li>
+  </ul>
+  <p class="note">向量中的數字只是示意。</p>
+</section>
+
+<!-- 9 -->
+<section class="slide" data-section="三 · 檢索怎麼做" data-src="wiki/sources/karpukhin-2020.md, wiki/concepts/retrieval.md, wiki/concepts/hybrid-search.md">
+  <div class="callno">09</div>
+  <h2>關鍵字 vs 語意：BM25 對上 DPR</h2>
+  <div class="chart" role="img" aria-label="Top-20 檢索正確率：Natural Questions BM25 59.1、DPR 78.4；SQuAD BM25 68.8、DPR 63.2">
+    <h3>前 20 筆中找得到答案的比例（top-20 accuracy）</h3>
+    <div class="bar-row"><span>NQ · BM25</span><div class="track"><div class="fill alt" style="width:59.1%"><b>59.1</b></div></div></div>
+    <div class="bar-row"><span>NQ · DPR</span><div class="track"><div class="fill" style="width:78.4%"><b>78.4</b></div></div></div>
+    <div class="bar-row"><span>SQuAD · BM25</span><div class="track"><div class="fill alt" style="width:68.8%"><b>68.8</b></div></div></div>
+    <div class="bar-row"><span>SQuAD · DPR</span><div class="track"><div class="fill" style="width:63.2%"><b>63.2</b></div></div></div>
+    <div class="axis"><span>0</span><span>50</span><span>100</span></div>
+    <div class="legend"><span><i style="background:var(--mark)"></i>BM25（關鍵字）</span><span><i style="background:var(--accent)"></i>DPR（語意向量）</span></div>
+  </div>
+  <p>SQuAD 的題目是看著段落出的，字面重疊高，所以關鍵字比對反而占優勢。兩種方法<mark>各有盲點</mark>，後面會看到把它們結合的 hybrid search。</p>
+</section>
+
+<!-- 10 -->
+<section class="slide" data-section="四 · 常見陷阱" data-src="wiki/concepts/contextual-retrieval.md">
+  <div class="callno">10</div>
+  <h2>陷阱一：chunk 斷章取義</h2>
+  <div class="box">
+    <span class="k">某個 chunk 的全部內容</span>
+    <p class="big">“The company's revenue grew by 3%”</p>
+  </div>
+  <ul>
+    <li>是<mark>哪一家公司</mark>？</li>
+    <li>是<mark>哪一季</mark>？</li>
+  </ul>
+  <p>切塊之後，chunk 失去了原文的上下文。使用者問「某公司第二季營收成長多少？」，這段就可能檢索不到。</p>
+</section>
+
+<!-- 11 -->
+<section class="slide" data-section="四 · 常見陷阱" data-src="wiki/concepts/lost-in-the-middle.md, wiki/sources/liu-2023.md">
+  <div class="callno">11</div>
+  <h2>陷阱二：Lost in the Middle</h2>
+  <div class="chart" role="img" aria-label="GPT-3.5-Turbo 在 20 份文件中：答案在開頭 75.8%，在中間 53.8%，不給文件 56.1%">
+    <h3>GPT-3.5-Turbo，20 份文件，答案放在不同位置的正確率</h3>
+    <div class="bar-row"><span>答案在開頭</span><div class="track"><div class="fill" style="width:75.8%"><b>75.8%</b></div><div class="refline" style="left:56.1%"></div></div></div>
+    <div class="bar-row"><span>答案在中間</span><div class="track"><div class="fill alt" style="width:53.8%"><b>53.8%</b></div><div class="refline" style="left:56.1%"></div></div></div>
+    <div class="axis"><span>0</span><span>50</span><span>100</span></div>
+    <div class="legend"><span><i style="background:var(--bad)"></i>虛線：完全不給文件（閉卷）56.1%</span></div>
+  </div>
+  <p>模型最注意開頭和結尾。答案放在中間時，表現<mark>比完全不給資料還差</mark>。另外，檢索從 20 份加到 50 份，只進步約 1.5%。</p>
+</section>
+
+<!-- 12 -->
+<section class="slide" data-section="五 · 怎麼改良" data-src="wiki/concepts/contextual-retrieval.md, wiki/sources/anthropic-2024.md">
+  <div class="callno">12</div>
+  <h2>Contextual Retrieval：替 chunk 補上背景</h2>
+  <div class="flow">
+    <div class="box"><span class="k">原本</span><p>“The company's revenue grew by 3%”</p></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="box hl"><span class="k">加上 LLM 寫的背景</span><p><mark>這段出自某公司某季財報，前一季營收為…</mark> The company's revenue grew by 3%</p></div>
+  </div>
+  <ul>
+    <li>LLM 讀整份文件後，為每個 chunk 寫 <b>50–100 tokens</b> 的背景說明。</li>
+    <li>加了背景的 chunk，同時拿去建向量索引和關鍵字索引。</li>
+    <li>一次性成本約每百萬文件 tokens <b>1.02 美元</b>。</li>
+  </ul>
+  <p class="note">背景說明的文字是示意。</p>
+</section>
+
+<!-- 13 -->
+<section class="slide" data-section="五 · 怎麼改良" data-src="wiki/sources/anthropic-2024.md, wiki/concepts/reranking.md, wiki/concepts/hybrid-search.md">
+  <div class="callno">13</div>
+  <h2>Hybrid search + Reranking：效果會疊加</h2>
+  <div class="chart" role="img" aria-label="top-20 檢索失敗率：基準 5.7%，加背景 3.7%，加 BM25 2.9%，加 rerank 1.9%">
+    <h3>Top-20 檢索失敗率（越短越好）</h3>
+    <div class="bar-row"><span>一般做法</span><div class="track"><div class="fill dim" style="width:95%"><b>5.7%</b></div></div></div>
+    <div class="bar-row"><span>+ 背景 embedding</span><div class="track"><div class="fill" style="width:61.7%"><b>3.7%</b></div></div></div>
+    <div class="bar-row"><span>+ 背景 BM25</span><div class="track"><div class="fill" style="width:48.3%"><b>2.9%</b></div></div></div>
+    <div class="bar-row"><span>+ Rerank</span><div class="track"><div class="fill alt" style="width:31.7%"><b>1.9%</b></div></div></div>
+    <div class="axis"><span>0%</span><span>3%</span><span>6%</span></div>
+  </div>
+  <div class="grid">
+    <div class="box"><span class="k">hybrid search</span><p>關鍵字（BM25）加上語意（embedding），比只用 embedding 好。</p></div>
+    <div class="box"><span class="k">rerank</span><p>先撈 <b>150</b> 個候選，再用 reranker 精選 <b>20</b> 個交給模型。</p></div>
+  </div>
+</section>
+
+<!-- 14 -->
+<section class="slide" data-section="五 · 怎麼改良" data-src="wiki/concepts/modular-rag.md, wiki/sources/gao-2023.md">
+  <div class="callno">14</div>
+  <h2>地圖：RAG 的三代演進</h2>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>範式</th><th>一句話</th><th>例子</th></tr></thead>
+    <tbody>
+      <tr><td><b>Naive RAG</b></td><td>最基本的「建索引 → 檢索 → 生成」</td><td>第 5 張的三步驟</td></tr>
+      <tr><td><b>Advanced RAG</b></td><td>在檢索<mark>前</mark>改寫查詢、檢索<mark>後</mark>重排序與壓縮</td><td>hybrid search、rerank</td></tr>
+      <tr><td><b>Modular RAG</b></td><td>拆成可替換、可重組的模組，可反覆或自適應檢索</td><td>Routing、RAG-Fusion、Self-RAG</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>學到新的 RAG 技巧時，先問自己：<b>它在改善哪一個步驟？</b></p>
+</section>
+
+<!-- 15 -->
+<section class="slide" data-section="六 · 進階變體" data-src="wiki/concepts/self-rag.md, wiki/sources/asai-2023.md">
+  <div class="callno">15</div>
+  <h2>Self-RAG：自己決定要不要查，再自己檢查</h2>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Reflection token</th><th>模型問自己</th><th>可能的答案</th></tr></thead>
+    <tbody>
+      <tr><td><code>Retrieve</code></td><td>現在需要查資料嗎？</td><td>yes / no / continue</td></tr>
+      <tr><td><code>IsRel</code></td><td>這段資料和問題相關嗎？</td><td>relevant / irrelevant</td></tr>
+      <tr><td><code>IsSup</code></td><td>我的回答有被資料支持嗎？</td><td>fully / partially / no support</td></tr>
+      <tr><td><code>IsUse</code></td><td>這個回答有用嗎？</td><td>5 ～ 1 分</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>PopQA 正確率：Self-RAG 13B <b>55.8</b>，加檢索的 ChatGPT <b>50.8</b>。但不是每項都贏：長文引用的 recall 仍低於加檢索的 ChatGPT。</p>
+</section>
+
+<!-- 16 -->
+<section class="slide" data-section="六 · 進階變體" data-src="wiki/concepts/graphrag.md, wiki/sources/edge-2024.md">
+  <div class="callno">16</div>
+  <h2>GraphRAG：回答「整份資料在講什麼」</h2>
+  <p>一般 RAG 只會找幾段最像的文字，回答不了「這個資料集的主要主題是什麼？」這類<mark>全域問題</mark>。</p>
+  <div class="flow">
+    <div class="box"><span class="k">1</span><p>LLM 抽出實體與關係，組成知識圖譜</p></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="box"><span class="k">2</span><p>把圖譜分群，為每一群寫摘要</p></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="box hl"><span class="k">3 · map-reduce</span><p>每群各答一部分，再合併成完整答案</p></div>
+  </div>
+  <p>對比一般向量 RAG：完整性勝率 <b>72–83%</b>。代價是回答比較不「直接」。</p>
+</section>
+
+<!-- 17 -->
+<section class="slide" data-section="七 · 怎麼評估" data-src="wiki/concepts/evaluation.md, wiki/sources/es-2023.md">
+  <div class="callno">17</div>
+  <h2>RAGAS：分開檢查「找資料」和「寫答案」</h2>
+  <div class="grid">
+    <div class="box hl"><span class="k">faithfulness · 0.95</span><h3>答案有沒有亂講？</h3><p>把答案拆成多句陳述，算出被檢索內容支持的比例。</p></div>
+    <div class="box"><span class="k">answer relevance · 0.78</span><h3>有沒有答到問題？</h3><p>從答案反推問題，比較它和原問題有多像。</p></div>
+    <div class="box"><span class="k">context relevance · 0.70</span><h3>找到的資料精準嗎？</h3><p>真正需要的句子，占檢索內容的比例。</p></div>
+  </div>
+  <p>RAGAS 不需要人工標準答案。卡片上的數字，是它與人工判斷的一致率。</p>
+</section>
+
+<!-- 18 -->
+<section class="slide" data-kind="summary" data-section="總結" data-src="wiki/index.md, wiki/concepts/lost-in-the-middle.md, wiki/concepts/hybrid-search.md, wiki/concepts/evaluation.md">
+  <div class="callno">18</div>
+  <h2>總結</h2>
+  <ul>
+    <li><b>先查再答</b>：RAG 用外部資料補上幻覺、過時、無法追溯三個問題。</li>
+    <li><b>切塊與向量</b>：文件切成 chunk，轉成 embedding，找最相似的幾段。</li>
+    <li><b>注意擺放</b>：給太多、放中間，模型反而會漏看。</li>
+    <li><b>加背景、混合檢索、rerank</b>：改良的效果可以疊加。</li>
+    <li><b>分開評估</b>：檢索好不好、答案忠不忠實，要分別量測。</li>
+  </ul>
+  <h3>自我檢測</h3>
+  <details><summary>Q1．為什麼答案放在中間，反而比不給資料還差？</summary><p>模型最注意上下文的開頭和結尾。GPT-3.5-Turbo 在答案放中間時只答對 53.8%，低於閉卷的 56.1%。</p></details>
+  <details><summary>Q2．BM25 和向量檢索各擅長什麼？</summary><p>BM25 擅長字面精準比對（例如專有名詞）；向量檢索擅長同義改寫。兩者結合就是 hybrid search。</p></details>
+  <details><summary>Q3．Faithfulness 在量什麼？</summary><p>答案中有多少比例的陳述，能被檢索到的內容支持，也就是答案有沒有「亂講」。</p></details>
+</section>
+
+</main>
+<nav class="bar" aria-label="翻頁">
+  <button id="prev" type="button" aria-label="上一張">←</button>
+  <div class="progress" aria-hidden="true"><div id="prog"></div></div>
+  <span class="count" id="count">1 / 18</span>
+  <button id="next" type="button" aria-label="下一張">→</button>
+</nav>
+<script>
+(function () {
+  var REPO = "https://github.com/SeniorBugEngineer/rag-llm-wiki/blob/main/";
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  slides.forEach(function (s) {
+    var src = (s.getAttribute("data-src") || "").split(",").map(function (x) { return x.trim(); }).filter(Boolean);
+    if (!src.length) return;
+    var div = document.createElement("div");
+    div.className = "src";
+    div.innerHTML = "出處：" + src.map(function (p) {
+      var name = p.replace(/^wiki\//, "").replace(/\.md$/, "");
+      return '<a href="' + REPO + p + '" target="_blank" rel="noopener">' + name + "</a>";
+    }).join(" · ");
+    s.appendChild(div);
+  });
+  var i = 0;
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, k) { s.classList.toggle("active", k === i); });
+    document.getElementById("count").textContent = (i + 1) + " / " + slides.length;
+    document.getElementById("prog").style.width = ((i + 1) / slides.length * 100) + "%";
+    if (location.hash !== "#" + (i + 1)) history.replaceState(null, "", "#" + (i + 1));
+    slides[i].scrollTop = 0;
+  }
+  function fromHash() { var n = parseInt(location.hash.slice(1), 10); show(isNaN(n) ? 0 : n - 1); }
+  document.getElementById("prev").addEventListener("click", function () { show(i - 1); });
+  document.getElementById("next").addEventListener("click", function () { show(i + 1); });
+  document.addEventListener("keydown", function (e) {
+    if (e.target.closest && e.target.closest("summary")) { if (e.key === " ") return; }
+    if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); show(i + 1); }
+    if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); show(i - 1); }
+    if (e.key === "Home") show(0);
+    if (e.key === "End") show(slides.length - 1);
+  });
+  window.addEventListener("hashchange", fromHash);
+  fromHash();
+})();
+</script>
+</body>
+</html>
