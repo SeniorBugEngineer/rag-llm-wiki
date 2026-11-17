@@ -165,7 +165,7 @@ pre.mermaid { background: var(--bg); border-radius: 8px; padding: 16px; margin: 
 
 <section id="s5">
   <h2><span class="n">5</span>實際執行與檢查紀錄</h2>
-  <p>以下 20 筆紀錄由 <code>scripts/build_process.py</code> 直接從 <a href="https://github.com/SeniorBugEngineer/rag-llm-wiki/blob/main/log.md">log.md</a> 轉成表格；每次腳本檢查的原始輸出都存在 <a href="https://github.com/SeniorBugEngineer/rag-llm-wiki/tree/main/runs">runs/</a>。</p>
+  <p>以下 21 筆紀錄由 <code>scripts/build_process.py</code> 直接從 <a href="https://github.com/SeniorBugEngineer/rag-llm-wiki/blob/main/log.md">log.md</a> 轉成表格；每次腳本檢查的原始輸出都存在 <a href="https://github.com/SeniorBugEngineer/rag-llm-wiki/tree/main/runs">runs/</a>。</p>
   <div class="scroll"><table>
     <thead><tr><th>時間</th><th>節點</th><th>結果</th><th>原因</th><th>處置</th></tr></thead>
     <tbody>
@@ -189,6 +189,7 @@ pre.mermaid { background: var(--bg); border-radius: 8px; padding: 16px; margin: 
       <tr><td class="t">2026-11-17 13:03</td><td><b>v2 TDD：check_claims.py</b></td><td><span class="pill pass">PASS</span></td><td>新增 9 個測試（含 1 個發現實作錯誤：num-ok 清單把千分位逗號當分隔符）；全部 22 測試通過</td><td>—</td></tr>
       <tr><td class="t">2026-11-17 13:03</td><td><b>v2 首次執行 C2+/C3+/C4+</b></td><td><span class="pill mix">FAIL→PASS</span></td><td>C2+ 抓到 3 頁單位換算（2,100 萬、170 萬）、C4+ 抓到第 8 張示意向量；C3+ PASS。皆為刻意改寫，以 <code>&lt;!-- num-ok --&gt;</code> 明確標註後重跑 C2+/C3+/C4+/C2/C4 全部 PASS（runs/*-v2*.txt）</td><td>—</td></tr>
       <tr><td class="t">2026-11-17 13:05</td><td><b>process.html 生成 + C5</b></td><td><span class="pill mix">FAIL→PASS</span></td><td>build_process.py 從 log.md／WORKFLOW.md 產生；截圖發現 v1/v2 並排時 v2 圖過小難讀，且 mermaid 把 <code>raw/&lt;id&gt;.md</code> 的 &lt;id&gt; 當 HTML 標籤吃掉</td><td>圖改上下排列、改用 mermaid 跳脫 #lt;id#gt;，重建後截圖正常</td></tr>
+      <tr><td class="t">2026-11-17 13:14</td><td><b>發布</b></td><td><span class="pill mix">FAIL→PASS</span></td><td>第一次 git push 認證失敗（GitHub 不支援密碼）→ 使用者登入後推送成功；設定 Pages（main /docs）。curl 確認 index.html 與 process.html 皆 HTTP 200，簡報 18 張 slide</td><td>—</td></tr>
     </tbody>
   </table></div>
 </section>

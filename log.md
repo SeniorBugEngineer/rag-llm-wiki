@@ -24,3 +24,4 @@
 | 2026-11-17 13:03 | v2 TDD：check_claims.py | PASS | 新增 9 個測試（含 1 個發現實作錯誤：num-ok 清單把千分位逗號當分隔符）；全部 22 測試通過 | — |
 | 2026-11-17 13:03 | v2 首次執行 C2+/C3+/C4+ | FAIL→PASS | C2+ 抓到 3 頁單位換算（2,100 萬、170 萬）、C4+ 抓到第 8 張示意向量；C3+ PASS。皆為刻意改寫，以 `<!-- num-ok -->` 明確標註後重跑 C2+/C3+/C4+/C2/C4 全部 PASS（runs/*-v2*.txt） | — |
 | 2026-11-17 13:05 | process.html 生成 + C5 | FAIL→PASS | build_process.py 從 log.md／WORKFLOW.md 產生；截圖發現 v1/v2 並排時 v2 圖過小難讀，且 mermaid 把 `raw/<id>.md` 的 <id> 當 HTML 標籤吃掉 | 圖改上下排列、改用 mermaid 跳脫 #lt;id#gt;，重建後截圖正常 |
+| 2026-11-17 13:14 | 發布 | FAIL→PASS | 第一次 git push 認證失敗（GitHub 不支援密碼）→ 使用者登入後推送成功；設定 Pages（main /docs）。curl 確認 index.html 與 process.html 皆 HTTP 200，簡報 18 張 slide | — |
