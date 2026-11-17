@@ -10,3 +10,6 @@
 | 2026-11-17 12:49 | C1 取得資料 | FAIL | 5 篇（lewis/karpukhin/liu/asai/es）抓 PDF 只得到壓縮二進位，無可讀文字；本機 Read 工具缺 pdftoppm 也無法渲染 | 改抓 HTML 版：ar5iv（2020/2023 舊論文）與 arxiv.org/html，5 篇全部取得內文。注意：計畫寫的後備順序是 abs→html→pdf，實際執行時先試了 pdf，順序錯誤浪費一輪 |
 | 2026-11-17 12:49 | C1 來源核實 | PASS | 8 篇標題、第一作者、年份與書單一致（arXiv API metadata + 頁面標題雙重比對）；anthropic-2024 標題 "Introducing Contextual Retrieval"、2024-09-19 | 寫入 raw/ |
 | 2026-11-17 12:52 | C2 check_wiki（sources 階段） | FAIL | 64 錯誤：58 broken link（13 個 concept slug 尚未建立，預期內）+ 7 orphan（source 頁只被 index 引用）。輸出：runs/20261117-1252-C2-sources.txt | 進入 Task 5 建立 concept 頁 |
+| 2026-11-17 12:54 | C2 check_wiki（r1） | PASS | 13 concept 頁 + index 建立後 21 頁 0 錯誤，一次通過。輸出：runs/*-C2-r1.txt | — |
+| 2026-11-17 12:54 | C2-數字核對（臨時加的語意檢查） | PASS（3 筆待人工確認） | C2 只驗結構、驗不到內容；臨時寫一次性腳本比對 wiki 中所有 ≥3 位數字是否出現在 raw/。未匹配 3 筆皆為單位換算（21M→2,100 萬、1.7M→170 萬），非錯誤 | 記為 v2 候選：把數字核對做成正式檢查 |
+| 2026-11-17 12:54 | C2-人工抽查 | FAIL→修正 | lost-in-the-middle.md 把 gao-2023「放到 prompt 邊緣」寫成「排在最前面」，引用歸屬不精確 | 改寫為分開歸屬；重跑 C2 PASS（runs/*-C2-r2.txt） |
